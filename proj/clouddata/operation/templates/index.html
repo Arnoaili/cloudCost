@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}主页{% endblock %}
+
+{% block menu %}
+<li class="mt">
+    <a class="active" href="/">
+        <i class="fa fa-dashboard"></i>
+        <span>主页</span>
+    </a>
+</li>
+
+<li class="mb">
+    <a href="/search">
+        <i class="fa fa-search"></i>
+        <span>成本月查询</span>
+    </a>
+</li>
+
+<li class="sub-menu">
+    <a href="javascript:;" >
+        <i class="fa fa-th"></i>
+        <span>项目原始数据</span>
+    </a>
+    <ul class="sub">
+        <li><a  href="/sync">qcloud数据更新</a></li>
+        <li><a  href="/platpercentage">海内外平台分摊比例</a></li>
+        <li><a  href="/fluxpercentage">qcloud流量费用数据</a></li>
+        <li><a  href="/awscost">aws成本数据</a></li>
+        <li><a  href="/othercost">qcloud其他费用数据</a></li>
+        <li><a  href="/otherplatcost">大陆其他平台费用数据</a></li>
+        <li><a  href="/bigdata">海内外大数据分摊比例</a></li>
+    </ul>
+</li>
+
+{% endblock %}
+
+{% block content %}
+<br>
+<div class="col-lg-12">
+  <div id="chinachart">
+  </div>
+  <br>
+  <div id="overseaschart">
+  </div>
+</div>
+<script language="JavaScript">
+  $.ajax({
+    type: "get",
+    url:"{% url 'chart' %}",
+    success:function(data){
+      // console.log(data['xAxis'])
+      var xAx = data['xAxis']
+      var series1 = data['series1']
+      var series2 = data['series2']
+      $(document).ready(function() {
+       var chart = {
+          type: 'spline'
+       };
+       var title = {
+          text: '各项目每月成本曲线图'
+       };
+       var subtitle = {
+          text: '大陆'
+       };
+       var xAxis = {
+          categories: xAx//["2017-11","2017-12"]
+       };
+       var yAxis = {
+          min: 0,
+          title: {
+             text: '金额（元）'
+          },
+          labels: {
+             formatter: function () {
+                return this.value;
+             }
+          },
+          lineWidth: 2
+       };
+       var tooltip = {
+          crosshairs: true,
+          shared: true
+       };
+       var plotOptions = {
+          spline: {
+             marker: {
+                radius: 3,
+                lineColor: '#666666',
+                lineWidth: 2
+             }
+          }
+       };
+       var json = {};
+       json.chart = chart;
+       json.title = title;
+       json.subtitle = subtitle;
+       json.tooltip = tooltip;
+       json.xAxis = xAxis;
+       json.yAxis = yAxis;
+       json.series = series1;
+       json.plotOptions = plotOptions;
+       $('#chinachart').highcharts(json);
+
+    });
+    $(document).ready(function() {
+     var chart = {
+        type: 'spline'
+     };
+     var title = {
+        text: '各项目每月成本曲线图'
+     };
+     var subtitle = {
+        text: '海外'
+     };
+     var xAxis = {
+        categories: xAx//["2017-11","2017-12"]
+     };
+     var yAxis = {
+        min: 0,
+        title: {
+           text: '金额（美元）'
+        },
+        labels: {
+           formatter: function () {
+              return this.value;
+           }
+        },
+        lineWidth: 2
+     };
+     var tooltip = {
+        crosshairs: true,
+        shared: true
+     };
+     var plotOptions = {
+        spline: {
+           marker: {
+              radius: 3,
+              lineColor: '#666666',
+              lineWidth: 2
+           }
+        }
+     };
+     var json = {};
+     json.chart = chart;
+     json.title = title;
+     json.subtitle = subtitle;
+     json.tooltip = tooltip;
+     json.xAxis = xAxis;
+     json.yAxis = yAxis;
+     json.series = series2;
+     json.plotOptions = plotOptions;
+     $('#overseaschart').highcharts(json);
+
+  });
+    }
+  })
+</script>
+
+{% endblock %}

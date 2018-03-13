@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}平台比例数据{% endblock %}
+
+{% block menu %}
+<li class="mt">
+    <a href="/">
+        <i class="fa fa-dashboard"></i>
+        <span>主页</span>
+    </a>
+</li>
+<li class="mb">
+    <a href="/search">
+        <i class="fa fa-search"></i>
+        <span>成本月查询</span>
+    </a>
+</li>
+<li class="sub-menu">
+    <a class="active" href="javascript:;" >
+        <i class=" fa fa-th"></i>
+        <span>项目原始数据</span>
+    </a>
+    <ul class="sub">
+        <li class="active"><a  href="/sync">qcloud数据更新</a></li>
+        <li><a  href="/platpercentage">海内外平台分摊比例</a></li>
+        <li><a  href="/fluxpercentage">qcloud流量费用数据</a></li>
+        <li><a  href="/awscost">aws成本数据</a></li>
+        <li><a  href="/othercost">qcloud其他费用数据</a></li>
+        <li><a  href="/otherplatcost">大陆其他平台费用数据</a></li>
+        <li><a  href="/bigdata">海内外大数据分摊比例</a></li>
+    </ul>
+</li>
+{% endblock %}
+
+{% block content %}
+<div id='show'>
+  <br>
+  <p><font size='3' face="arial" color="#008B8B">Qcloud 数据同步更新</font></p>
+  <div style="width:100%; height:2px; border-top:1px solid #999; clear:both;"></div>
+  <p><font size='1' color="#A9A9A9"><strong>说明:</strong> qcloud 每月原始数据通过该接口获取！</font></p>
+  <button id="btn" type="button" class="btn btn-info btn-xs">更新</button>
+  <br>
+  <br>
+  <div id="DebtFind">
+  </div>
+</div>
+
+<script>
+  $(document).ready(function(){
+    $.ajax({
+      url:"{% url 'user' %}",
+      dataType:"json",
+      type:"get",
+      success:function(data){
+        console.log(data.data)
+        // if(data.data){
+        //   document.getElementById("show").style.display="";
+        // }else{
+        //   // document.getElementById("show").style.display="none";
+        //   var strHtml = "<p><font size='2' face='arial' color='#008B8B'>普通用户不能查看该页面！</font></p>"
+        //   $("#show").html(strHtml)
+        // }
+        if(!data.data){
+          var strHtml = "<br><p><font size='2' face='arial' color='#008B8B'>普通用户不能查看该页面！</font></p>"
+          $("#show").html(strHtml)
+        }
+      }
+    });
+  });
+  $("#btn").click(function(){
+    var strHtml = "<p><font size='1' face='arial' color='#008B8B'>数据获取中......</font></p>"
+    $("#DebtFind").html(strHtml)
+    $.ajax({
+      url:"{% url 'syncqcloud' %}",
+      dataType:"json",
+      type:"post",
+      success:function(data){
+        console.log(data)
+        var strHtml = "<p><font size='1' face='arial' color='#008B8B'>"+data['data']+"</font></p>"
+        $("#DebtFind").html(strHtml)
+      }
+    })
+  })
+</script>
+{% endblock %}

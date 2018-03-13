@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}平台比例数据{% endblock %}
+
+{% block menu %}
+<li class="mt">
+    <a href="/">
+        <i class="fa fa-dashboard"></i>
+        <span>主页</span>
+    </a>
+</li>
+<li class="mb">
+    <a href="/search">
+        <i class="fa fa-search"></i>
+        <span>成本月查询</span>
+    </a>
+</li>
+<li class="sub-menu">
+    <a class="active" href="javascript:;" >
+        <i class=" fa fa-th"></i>
+        <span>项目原始数据</span>
+    </a>
+    <ul class="sub">
+        <li><a  href="/sync">qcloud数据更新</a></li>
+        <li class="active"><a  href="/platpercentage">海内外平台分摊比例</a></li>
+        <li><a  href="/fluxpercentage">qcloud流量费用数据</a></li>
+        <li><a  href="/awscost">aws成本数据</a></li>
+        <li><a  href="/othercost">qcloud其他费用数据</a></li>
+        <li><a  href="/otherplatcost">大陆其他平台费用数据</a></li>
+        <li><a  href="/bigdata">海内外大数据分摊比例</a></li>
+    </ul>
+</li>
+{% endblock %}
+
+{% block content %}
+<div id='show'>
+  <div id="toolbar">
+    <button id="add" class="btn-xs btn-success" onclick="add()">添加</button>
+  </div>
+  <div class="container">
+      <table id="table" class="table table-condensed" style="font-size:13px;">
+      </table><br>
+      <div style="font-size:13px;line-height:25px">
+        <input type="file" id="uploadfile" name="upload" />
+        <button class="btn btn-info btn-xs" onclick="fileUpload()">导入excel</button>
+      </div>
+  </div>
+
+  <div class="modal fade bs-example-modal-sm" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+     <div class="modal-dialog modal-sm" role="document" style="width:500px;line-height:10px">
+       <div class="modal-content">
+         <div class="modal-header" style="font-size:3px;">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+          <h5 class="modal-title" id="myModalLabel">编辑</h5>
+         </div>
+         <div class="modal-body" style="height:350px;overflow:auto;" >
+          <div class="form-group">
+          <label for="txt_departmentname" style="font-size:13px;">项目名称</label>
+          <input type="text" name="projectName" class="form-control" id="txt_projectName" placeholder="项目名称" style="font-size:13px;" readonly="readonly">
+          </div>
+          <div class="form-group">
+          <label for="txt_departmentname" style="font-size:13px;">发行区域</label>
+          <input type="text" name="region" class="form-control" id="txt_region" placeholder="发行区域" style="font-size:13px;" readonly="readonly">
+          </div>
+          <div class="form-group">
+          <label for="txt_departmentname" style="font-size:13px;">版本</label>
+          <input type="text" name="version" class="form-control" id="txt_version" placeholder="版本" style="font-size:13px;" readonly="readonly">
+          </div>
+          <div class="form-group">
+          <label for="txt_departmentlevel" style="font-size:13px;">比例折算</label>
+          <input type="text" name="percentage" class="form-control" id="txt_percentage" placeholder="比例折算" style="font-size:13px;">
+          </div>
+          <div class="form-group">
+          <label for="txt_statu" style="font-size:13px;">月份</label>
+          <input type="text" name="month" class="form-control" id="txt_month" placeholder="月份" style="font-size:13px;" readonly="readonly">
+          </div>
+         </div>
+         <div class="modal-footer">
+          <button type="button" class="btn-xs btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>关闭</button>
+          <button type="button" id="btn_submit" class="btn-xs btn-primary" data-dismiss="modal" onclick="update();"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>保存</button>
+         </div>
+       </div>
+     </div>
+   </div>
+</div>
+
+<script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+<script src="/static/js/bootstrap-table.js"></script>
+<script src="/static/js/bootstrap-editable.js"></script>
+<script>
+    $(document).ready(function(){
+      $.ajax({
+        url:"{% url 'user' %}",
+        dataType:"json",
+        type:"get",
+        success:function(data){
+          if(!data.data){
+            var strHtml = "<br><p><font size='2' face='arial' color='#008B8B'>普通用户不能查看该页面！</font></p>"
+            $("#show").html(strHtml)
+          }
+        }
+      });
+    });
+    var $table = $('#table');
+    $(function () {
+        $table.bootstrapTable({
+            url: "{% url 'platapi' %}",
+            search: true,
+            searchAlign: 'left',
+            searchOnEnterKey: true,
+            pageNumber: 1,
+            pageSize: 5,
+            striped: true,
+            showRefresh: true,
+            buttonsAlign: 'left',
+            showToggle: 'true',
+            uniqueID: 'projectName',
+            sortOrder: "asc",
+            editable: true ,
+            showColumns:true,
+            toolbar: '#toolbar',
+            toolbarAlign: 'right',
+            columns: [{
+              field: 'Number',
+              title: '#',
+              formatter: function (value, row, index) {
+                return index+1;
+              }
+            },{
+              field: 'projectName',
+              title: '项目名称'
+            },{
+              field: 'region',
+              title: '发行区域'
+            },{
+              field: 'version',
+              title: '版本'
+            },{
+              field: 'percentage',
+              title: '比例折算',
+            },{
+              field: 'month',
+              title: '月份'
+            },{
+              field: 'operate',
+              title: '操作',
+              align: 'center',
+              events: 'operateEvents',  //给按钮注册事件
+              formatter: AddFunctionAlty   //表格中增加按钮
+            }]
+        });
+        function AddFunctionAlty (value,row,index) {
+          return[
+            '<button id="edit" class="btn-xs btn-primary">edit</button>',
+            '<button id="delete" class="btn-xs btn-danger">delete</button>'
+          ].join('')
+        };
+        window.operateEvents = {
+          'click #edit': function(e,value,row,index){
+            $('#myModal').modal();
+            $('#txt_projectName').val(row.projectName)
+            $('#txt_region').val(row.region)
+            $('#txt_version').val(row.version)
+            $('#txt_percentage').val(row.percentage)
+            $('#txt_month').val(row.month)
+            $('#txt_projectName').attr("readonly","readonly")
+            $('#txt_region').attr("readonly","readonly")
+            $('#txt_version').attr("readonly","readonly")
+            $('#txt_month').attr("readonly","readonly")
+            // alert("A");
+            console.log(index)
+          },
+          'click #delete': function(e,value,row,index){
+            // alert("B");
+            var projectName = row.projectName;
+            var version = row.version;
+            var month = row.month;
+            var alt = confirm('确定删除？')
+            if(alt){
+              $.ajax({
+                type: "delete",
+                url: "{% url 'platapi' %}",
+                data: projectName+'&'+version+'&'+month,//{'projectName':projectName, 'version':version, 'month':month},
+                dataType: 'json',
+                success: function(result) {
+                    alert(result.data);
+                  }
+              });
+            }
+          }
+        }
+    });
+    function update () {
+      var projectName = $('#txt_projectName').val();
+      var region = $('#txt_region').val();
+      var version = $('#txt_version').val();
+      var percentage = $('#txt_percentage').val();
+      var month = $('#txt_month').val();
+      console.log(projectName)
+      $.ajax({
+        type: "post",
+        url: "{% url 'platapi' %}",
+        data: {'projectName':projectName, 'region':region, 'version':version, 'percentage':percentage, 'month':month},
+        dataType: 'json',
+        success:function(result){
+          alert(result.data)
+        }
+      })
+    };
+    function fileUpload () {
+      // var btnupload = $('#btn_upload').files;
+      var files = document.getElementById('uploadfile').files;
+      var formData = new FormData();
+      formData.append("file" , files[0]);
+      $.ajax({
+        type: "POST",
+        url: "{% url 'importplatfile' %}",//"/importplatfile/",
+        data: formData ,
+        processData : false, //必须false才会自动加上正确的Content-Type
+        dataType: 'json',
+        contentType : false,//必须false才会避开jQuery对 formdata 的默认处理
+        success: function(res) {
+            console.log(res);
+            alert(res.data)
+            // $("#versionsize").val(res.filesize);
+            // var versionurl = $("#versionurl").val(res.url);
+            // console.log(versionurl);
+        }
+      });
+    };
+    function add () {
+      $('#myModal').modal();
+      $('#txt_projectName').val('')
+      $('#txt_region').val('')
+      $('#txt_version').val('')
+      $('#txt_percentage').val('')
+      $('#txt_month').val('')
+      $('#txt_projectName').removeAttr("readonly");
+      $('#txt_region').removeAttr("readonly");
+      $('#txt_version').removeAttr("readonly");
+      $('#txt_month').removeAttr("readonly");
+    }
+</script>
+{% endblock %}
